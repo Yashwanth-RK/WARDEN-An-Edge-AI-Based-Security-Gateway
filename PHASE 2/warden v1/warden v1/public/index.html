@@ -1,0 +1,121 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>VAJRA · Secure Link Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#080d10;--pn:#0f181d;--ln:#1e323b;--tx:#cfe6e0;--dim:#6f8a88;--ok:#46e6b0;--am:#ffb020;--rd:#ff3b3b;
+--mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;--head:Bahnschrift,"Segoe UI Semibold","Arial Narrow",sans-serif}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--bg);color:var(--tx);font:13px var(--mono);overflow:hidden}
+header{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--ln);font-family:var(--head);letter-spacing:.18em}
+header b{color:var(--ok)} header span{color:var(--dim);font-size:11px;letter-spacing:.1em}
+button{font:inherit;cursor:pointer}
+#grid{height:calc(100% - 42px);display:grid;grid-template-columns:minmax(290px,26%) 1fr minmax(290px,26%);grid-template-rows:1fr 1fr;gap:10px;padding:10px}
+.pn{background:var(--pn);border:1px solid var(--ln);padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden;position:relative}
+.pn h2{font:600 12px var(--head);letter-spacing:.2em;color:var(--dim);display:flex;justify-content:space-between;align-items:center}
+.chip{padding:2px 8px;border:1px solid currentColor;font-size:10px;letter-spacing:.12em;color:var(--ok)}
+.chip.am{color:var(--am)}.chip.rd{color:var(--rd)}
+.big{display:flex;gap:18px}.big div{flex:1}
+.big small{display:block;color:var(--dim);font-size:10px;letter-spacing:.14em}
+.big strong{font:600 38px var(--head);line-height:1.1}.big strong i{font:12px var(--mono);color:var(--dim);font-style:normal}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;color:var(--dim)}.kv b{color:var(--tx);font-weight:400;text-align:right}
+#tl{grid-area:1/1}#tr{grid-area:1/3}#bl{grid-area:2/1}#br{grid-area:2/3}
+#ctr{grid-area:1/2/3/2;background:radial-gradient(circle at 50% 50%,#0f1c22,#080d10 70%);border:1px solid var(--ln);position:relative;min-height:0}
+#ctr svg{width:100%;height:100%}
+.gauge{display:flex;gap:6px}.gauge i{flex:1;height:10px;border:1px solid var(--ln)}.gauge i.on{background:var(--rd);border-color:var(--rd)}.gauge i.on.w{background:var(--am);border-color:var(--am)}
+#log{flex:1;overflow:auto;font-size:11px;line-height:1.5;color:var(--dim);border-top:1px solid var(--ln);padding-top:6px}
+#log p.a{color:var(--rd)}#log p.o{color:var(--ok)}#log p.w{color:var(--am)}
+.sw{display:flex;align-items:center;gap:14px}
+#sw{width:92px;height:44px;border-radius:22px;border:2px solid var(--ok);background:#0a1a15;position:relative;flex:none;transition:.2s}
+#sw::after{content:"";position:absolute;top:4px;left:4px;width:32px;height:32px;border-radius:50%;background:var(--ok);transition:.2s}
+#sw.cut{border-color:var(--rd);background:#2a0c0c}#sw.cut::after{left:52px;background:var(--rd)}
+#swl{font:600 15px var(--head);letter-spacing:.12em}
+.ct{display:grid;gap:5px;border-top:1px solid var(--ln);padding-top:8px;overflow:auto}
+.ct div{display:flex;justify-content:space-between;gap:8px}.ct span{color:var(--dim)}.ct a{color:var(--am);text-decoration:none}
+#ov{position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0;transition:opacity .3s;background:rgba(255,20,20,.26);box-shadow:inset 0 0 160px 40px rgba(255,0,0,.55)}
+#ov.on{opacity:1;animation:pulse .9s infinite alternate}
+@keyframes pulse{from{background:rgba(255,20,20,.14)}to{background:rgba(255,20,20,.36)}}
+#warn{position:fixed;top:54px;left:50%;transform:translateX(-50%);z-index:60;pointer-events:none;display:none;align-items:center;gap:14px;background:rgba(40,0,0,.85);border:2px solid var(--rd);padding:8px 22px;font:700 22px var(--head);letter-spacing:.2em;color:#fff}
+#warn.on{display:flex;animation:blink .6s infinite alternate}#warn svg{width:38px}
+@keyframes blink{from{opacity:1}to{opacity:.45}}
+#intr{opacity:0;transition:opacity .5s}#intr.on{opacity:1}
+.flt{animation:flt 2.4s ease-in-out infinite alternate}@keyframes flt{to{transform:translateY(-8px)}}
+#aud,#demo{background:none;border:1px solid var(--ln);color:var(--dim);padding:3px 10px;margin-left:8px}
+</style></head><body>
+<header><div><b>VAJRA</b> · SECURE SENSOR LINK</div><span><span id="mode"></span><button id="aud">🔊 ARM SIREN</button><button id="demo" hidden>⚡ DEMO: SIMULATE ATTACK</button> <span id="clk"></span></span></header>
+<div id="grid">
+ <section class="pn" id="tl"><h2>SENDER · ESP32 .1 <span class="chip" id="sc">TRANSMITTING</span></h2>
+  <div class="big"><div><small>TEMPERATURE</small><strong id="st">--<i> °C</i></strong></div><div><small>HUMIDITY</small><strong id="sh">--<i> %</i></strong></div></div>
+  <div class="kv"><span>Reading #</span><b id="sn">-</b><span>Last sent</span><b id="sl">-</b><span>Interval</span><b>2 s</b><span>Cipher</span><b>AES-128-GCM</b><span>Sensor</span><b>DHT11 · pin 23</b></div></section>
+ <section class="pn" id="tr"><h2>RECEIVER · ESP32 .2 <span class="chip" id="rc">LISTENING</span></h2>
+  <div class="big"><div><small>TEMPERATURE</small><strong id="rt">--<i> °C</i></strong></div><div><small>HUMIDITY</small><strong id="rh">--<i> %</i></strong></div></div>
+  <div class="kv"><span>Packet #</span><b id="rn">-</b><span>Source tag</span><b id="rs">-</b><span>Last received</span><b id="rl">-</b><span>Auth</span><b id="ra">-</b><span>Alert LED D22</span><b id="rled">ON</b></div></section>
+ <section class="pn" id="bl"><h2>CUTOFF CONTROL <span class="chip" id="cc">LINK OPEN</span></h2>
+  <div class="sw"><button id="sw" aria-label="cutoff switch"></button><div><div id="swl">LINK ACTIVE</div><div style="color:var(--dim);font-size:11px" id="swh">Flip to HALT sender via receiver</div></div></div>
+  <div class="ct"><div><span>CERT-In (24×7)</span><a href="tel:1800114949">1800-11-4949</a></div><div><span>CERT-In email</span><a href="mailto:incident@cert-in.org.in">incident@cert-in.org.in</a></div>
+  <div><span>Cyber Crime Helpline</span><a href="tel:1930">1930</a></div><div><span>Report portal</span><a href="https://cybercrime.gov.in" target="_blank">cybercrime.gov.in</a></div>
+  <div><span>Lab security officer</span><a href="tel:+910000000000">+91-00000-00000</a></div></div></section>
+ <section class="pn" id="br"><h2>IDS STATISTICS <span class="chip" id="ic">MONITORING</span></h2>
+  <div class="kv"><span>Alerts / cutoff at 2</span><b></b></div><div class="gauge"><i id="g1"></i><i id="g2"></i></div>
+  <div class="kv"><span>Packets seen</span><b id="ip">0</b><span>Accepted</span><b id="ia">0</b><span>Flagged</span><b id="if">0</b><span>Last detection</span><b id="id">none</b></div>
+  <div id="log"></div></section>
+ <section id="ctr"><svg viewBox="0 0 600 520" preserveAspectRatio="xMidYMid meet">
+  <defs><pattern id="gp" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0H0V30" fill="none" stroke="#14252c" stroke-width=".6"/></pattern></defs>
+  <rect width="600" height="520" fill="url(#gp)"/>
+  <g id="snd" transform="translate(40,200)"><rect width="100" height="100" fill="#0f181d" stroke="#46e6b0" stroke-width="2"/><rect x="14" y="14" width="72" height="44" fill="#08110f" stroke="#1e323b"/><path d="M22 48l14-16 12 8 14-18 14 10" stroke="#46e6b0" fill="none" stroke-width="2"/><circle cx="50" cy="80" r="6" fill="#46e6b0" id="sled"/></g>
+  <text x="90" y="330" fill="#6f8a88" text-anchor="middle" font-size="13" letter-spacing="3">SENDER</text>
+  <g id="rcv" transform="translate(460,200)"><rect width="100" height="100" fill="#0f181d" stroke="#46e6b0" stroke-width="2" id="rbox"/><path d="M50 18l30 12v22c0 18-14 28-30 34-16-6-30-16-30-34V30z" fill="none" stroke="#46e6b0" stroke-width="2" id="rsh"/><path d="M38 52l9 9 16-18" stroke="#46e6b0" fill="none" stroke-width="3" id="rck"/></g>
+  <text x="510" y="330" fill="#6f8a88" text-anchor="middle" font-size="13" letter-spacing="3">RECEIVER + IDS</text>
+  <line id="ch" x1="140" y1="250" x2="460" y2="250" stroke="#46e6b0" stroke-width="3" stroke-dasharray="6 6" opacity=".55"/>
+  <text x="300" y="285" fill="#6f8a88" text-anchor="middle" font-size="11" letter-spacing="2">ENCRYPTED UART CHANNEL</text>
+  <g id="cutx" opacity="0" transform="translate(300,250)"><circle r="18" fill="#2a0c0c" stroke="#ff3b3b" stroke-width="2"/><path d="M-9-9L9 9M9-9L-9 9" stroke="#ff3b3b" stroke-width="4"/></g>
+  <g id="pk"></g>
+  <g id="intr"><path d="M300 200V250" stroke="#ff3b3b" stroke-dasharray="3 4" stroke-width="2"/>
+   <g class="flt"><g transform="translate(300,130)"><path d="M-34 60c0-40 10-70 34-70s34 30 34 70z" fill="#1a0b0e" stroke="#ff3b3b" stroke-width="2"/><ellipse cy="-2" rx="17" ry="20" fill="#000"/><circle cx="-7" cy="-4" r="3.5" fill="#ff3b3b"/><circle cx="7" cy="-4" r="3.5" fill="#ff3b3b"/><path d="M-34 60l-10 22M34 60l10 22" stroke="#ff3b3b" stroke-width="2"/></g>
+   <text x="300" y="60" fill="#ff3b3b" text-anchor="middle" font-size="13" letter-spacing="4" font-weight="700">INTRUDER</text></g></g>
+  <text x="300" y="480" fill="#6f8a88" text-anchor="middle" font-size="11" letter-spacing="2" id="cap">ALL PACKETS AUTHENTIC</text></svg></section>
+</div>
+<div id="ov"></div>
+<div id="warn"><svg viewBox="0 0 40 36"><path d="M20 2L38 34H2z" fill="#ff3b3b" stroke="#fff" stroke-width="2"/><path d="M20 13v10" stroke="#fff" stroke-width="3"/><circle cx="20" cy="28" r="2" fill="#fff"/></svg>WARNING · INTRUSION DETECTED<svg viewBox="0 0 40 36"><path d="M20 2L38 34H2z" fill="#ff3b3b" stroke="#fff" stroke-width="2"/><path d="M20 13v10" stroke="#fff" stroke-width="3"/><circle cx="20" cy="28" r="2" fill="#fff"/></svg></div>
+<script>
+const $=i=>document.getElementById(i),S={ip:0,ia:0,fl:0,alerts:0,cut:false,alarm:false};
+const now=()=>new Date().toLocaleTimeString();
+setInterval(()=>$('clk').textContent=now(),1000);
+// ---- log ----
+function log(c,m){const p=document.createElement('p');p.className=c;p.textContent=now()+'  '+m;$('log').prepend(p);while($('log').children.length>60)$('log').lastChild.remove()}
+// ---- siren ----
+let ac,sir;const arm=()=>{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume();$('aud').textContent='🔊 SIREN ARMED'};
+$('aud').onclick=arm;document.addEventListener('click',()=>{if(!ac)arm()},{once:true});
+function siren(on){clearInterval(sir);if(!on||!ac)return;let h=0;sir=setInterval(()=>{const o=ac.createOscillator(),g=ac.createGain();o.type='sawtooth';o.frequency.value=(h^=1)?950:620;g.gain.value=.12;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.28)},300)}
+// ---- packets animation (channel x 140..460, y 250; intruder drop at x300) ----
+const pk=[];function spawn(kind){const c=document.createElementNS('http://www.w3.org/2000/svg','rect');c.setAttribute('width',14);c.setAttribute('height',10);c.setAttribute('rx',2);
+ c.setAttribute('fill',kind=='bad'?'#ff3b3b':'#46e6b0');$('pk').appendChild(c);pk.push({c,p:0,kind})}
+function frame(){for(let i=pk.length-1;i>=0;i--){const o=pk[i];o.p+=o.kind=='bad'?.012:.008;let x,y=250;
+  if(o.kind=='bad'){if(o.p<.35){x=300;y=200+o.p/.35*50}else x=300+(o.p-.35)/.65*160}else{x=140+o.p*320;if(S.cut&&x>=288){o.p=2}}
+  if(o.p>=1){o.c.remove();pk.splice(i,1);continue}o.c.setAttribute('x',x-7);o.c.setAttribute('y',y-5)}requestAnimationFrame(frame)}frame();
+// ---- state helpers ----
+function setIDS(){const a=S.alerts;$('g1').className=a>=1?'on w':'';$('g2').className=a>=2?'on':'';
+ const c=S.cut?['LINK CUT','rd']:a?['ALERT','am']:['MONITORING',''];$('ic').textContent=c[0];$('ic').className='chip '+c[1];
+ $('if').textContent=S.fl;$('ip').textContent=S.ip;$('ia').textContent=S.ia}
+function alarm(on){S.alarm=on;$('ov').classList.toggle('on',on);$('warn').classList.toggle('on',on);$('intr').classList.toggle('on',on);siren(on);
+ $('cap').textContent=on?'⚠ UNAUTHORISED NODE ON CHANNEL':'ALL PACKETS AUTHENTIC';$('cap').setAttribute('fill',on?'#ff3b3b':'#6f8a88');
+ for(const i of['rbox','rsh'])$(i).setAttribute('stroke',on?'#ff3b3b':'#46e6b0');$('rck').setAttribute('stroke',on?'#ff3b3b':'#46e6b0')}
+function setCut(v){S.cut=v;$('sw').classList.toggle('cut',v);$('swl').textContent=v?'LINK CUT OFF':'LINK ACTIVE';$('swl').style.color=v?'var(--rd)':'';
+ $('swh').textContent=v?'Flip back to resume transmission':'Flip to HALT sender via receiver';$('cc').textContent=v?'CUT OFF':'LINK OPEN';$('cc').className='chip '+(v?'rd':'');
+ $('cutx').setAttribute('opacity',v?1:0);$('ch').setAttribute('stroke',v?'#ff3b3b':'#46e6b0');$('rled').textContent=v?'OFF':'ON';
+ $('sc').textContent=v?'HALTED':'TRANSMITTING';$('sc').className='chip '+(v?'rd':'');$('rc').textContent=v?'LINK DOWN':'LISTENING';$('rc').className='chip '+(v?'rd':'');setIDS()}
+$('sw').onclick=()=>fetch('/api/cutoff',{method:'POST',body:JSON.stringify({on:!S.cut})});
+$('demo').onclick=()=>fetch('/api/demo/attack',{method:'POST'});
+// ---- events ----
+const es=new EventSource('/events');
+es.onmessage=e=>{const d=JSON.parse(e.data);
+ if(d.t=='hello'){$('mode').textContent=d.demo?'DEMO MODE  ':'LIVE SERIAL  ';$('demo').hidden=!d.demo}
+ else if(d.t=='sender'){$('st').firstChild.nodeValue=d.temp.toFixed(1);$('sh').firstChild.nodeValue=d.hum.toFixed(1);$('sn').textContent=d.n;$('sl').textContent=now();if(!S.cut)spawn('ok')}
+ else if(d.t=='rxraw'){S.ip++;setIDS()}
+ else if(d.t=='rx'){const bad=d.src=='MITM';$('rt').firstChild.nodeValue=d.temp.toFixed(1);$('rh').firstChild.nodeValue=d.hum.toFixed(1);$('rn').textContent=d.n;$('rs').textContent=d.src;$('rl').textContent=now();
+  $('ra').textContent=bad?'AUTH OK · FORGED SRC':'AES-GCM OK';$('ra').style.color=bad?'var(--rd)':'';if(!bad){S.ia++;log('o','packet #'+d.n+' accepted')}setIDS()}
+ else if(d.t=='alert'){S.alerts=d.n||S.alerts+1;S.fl++;$('id').textContent=d.reason;log('a','ALERT '+S.alerts+': '+d.reason);spawn('bad');setIDS();if(!S.alarm)alarm(true)}
+ else if(d.t=='cutoff'){setCut(true);log('a','IDS CUTOFF — sender halted')}
+ else if(d.t=='resume'){S.alerts=0;setCut(false);alarm(false);$('ra').style.color='';log('w','link resumed, IDS re-armed')}
+ else if(d.t=='halt'){$('sc').textContent=d.v?'HALTED':'TRANSMITTING'}
+ else if(d.t=='log')log('w',d.src+': '+d.line)};
+es.onerror=()=>log('w','dashboard server disconnected');
+</script></body></html>

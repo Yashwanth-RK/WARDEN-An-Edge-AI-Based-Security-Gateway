@@ -1,0 +1,22 @@
+RECEIVER (.2) FIRMWARE PATCH - lets the dashboard's cutoff switch work over USB serial.
+Add this function above setup():
+
+void checkDashboardCommand() {
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == 'H' && !shutdownSent) {            // dashboard CUTOFF
+      idsAlertCount = IDS_CUTOFF_THRESHOLD;
+      triggerShutdown("Dashboard manual cutoff");
+    } else if (c == 'R' && shutdownSent) {      // dashboard RESUME (same as button)
+      Control.println(RESUME_COMMAND); Control.flush();
+      shutdownSent = false; idsAlertCount = 0;
+      timeoutAlertCounted = false; receivedAnyPacket = false;
+      digitalWrite(ALERT_LED_PIN, HIGH);
+      lastValidPacket = millis(); rateWindowStart = millis(); packetsInWindow = 0;
+      Serial.println("[MANUAL RESET] Dashboard resume");
+      Serial.println("[RESUME] IDS monitoring restarted");
+    }
+  }
+}
+
+and call checkDashboardCommand(); as the first line inside loop().
